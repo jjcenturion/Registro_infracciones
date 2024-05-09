@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# DotEnv config
+.env*
+
+# VS Code
+.vscode/
+
+# Virtual env
+venv/
