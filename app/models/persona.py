@@ -1,9 +1,8 @@
 
-
 from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from app.models.database import Base
+
 
 class Persona(Base):
     __tablename__ = 'persona'
