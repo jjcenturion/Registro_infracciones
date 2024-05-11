@@ -9,7 +9,7 @@ from typing import List
 
 from app.models.persona import Persona
 from app.models.database import get_db
-from app.repositories import PersonaRepo, VehiculoRepo
+from app.repositories import PersonaRepo, VehiculoRepo, OficialRepo, InfraccionRepo
 import app.schemas as schemas
 
 app = FastAPI()
@@ -111,4 +111,51 @@ def delete_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
 
     vehiculo_repo.delete(db, vehiculo_id)
     return "Vehiculo borrado"
+
+@app.post("/oficial/", response_model=schemas.Oficial)
+def create_oficial(oficial_request: schemas.OficialCreate, db: Session = Depends(get_db)):
+    
+    oficial_repo = OficialRepo()
+    db_oficial = oficial_repo.find_by_numero(db, oficial_request.numero_identificatorio)
+    if db_oficial:
+        raise HTTPException(status_code=400, detail="El numero identificatorio del oficial ya existe")
+    else:
+        return oficial_repo.create(db=db, obj_data=oficial_request)
+    
+@app.get('/oficiales', response_model=List[schemas.Oficial])
+def get_oficiales(db: Session = Depends(get_db)):
+
+    oficial_repo = OficialRepo() 
+    oficiales = oficial_repo.find_all(db=db)
+    if oficiales:
+        return oficiales
+    raise HTTPException(status_code=400, detail="Ningun Oficial fue encontrado")
+
+@app.post("/infraccion/", response_model=schemas.Infraccion)
+def cargar_infraccion(infraccion_request: schemas.InfraccionCreate, db: Session = Depends(get_db)):
+    
+    # Verificar si la placa patente existe en la tabla de vehículos
+    vehiculo_repo = VehiculoRepo()
+    vehiculo_existente = vehiculo_repo.find_by_patente(db=db, patente=infraccion_request.placa_patente)
+    if not vehiculo_existente:
+        raise HTTPException(status_code=404, detail="Placa patente no encontrada")
+    
+    try:
+        infracccion_repo = InfraccionRepo()
+        return infracccion_repo.create(db=db, obj_data=infraccion_request)
+    except Exception as e:
+        # Manejo de errores inesperados
+        raise HTTPException(status_code=500, detail="Error interno del servidor") from e
+    
+
+@app.post("/generar_informe/", response_model=schemas.InformeInfraccionResponse)
+def generar_informe(informe_request: schemas.InformeInfraccionRequest, db: Session = Depends(get_db)):
+    """ Debe recibir como parámetro el correo electrónico de una persona, y devolver un JSON con el
+        listado de infracciones de cualquier vehículo a su nombre.""" 
+
+    infracccion_repo = InfraccionRepo()
+    infracciones = infracccion_repo.obtener_infracciones_por_correo(db, informe_request.correo_electronico)
+    if not infracciones:
+        raise HTTPException(status_code=404, detail="No se encontraron infracciones para el correo electrónico proporcionado")
+    return {"infracciones": infracciones}
 

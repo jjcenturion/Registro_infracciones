@@ -53,6 +53,29 @@ class OficialRepo(BaseRepo):
     def __init__(self):
         super().__init__(Oficial)
 
+    def find_by_numero(self, db: Session, numero_identificatorio):
+        return db.query(Oficial).filter(Oficial.numero_identificatorio == numero_identificatorio).first()
+
 class InfraccionRepo(BaseRepo):
     def __init__(self):
         super().__init__(Infraccion)
+
+    def obtener_infracciones_por_correo(self, db: Session, correo_electronico):
+        # Primero, obtenemos la persona asociada al correo electrónico proporcionado
+        persona = db.query(Persona).filter(Persona.correo_electronico == correo_electronico).first()
+
+        if not persona:
+            return []
+
+        # Luego, obtenemos todos los vehículos asociados a esa persona
+        vehiculos = persona.vehiculos
+
+        infracciones_totales = []
+
+        # Iteramos sobre cada vehículo para obtener sus infracciones
+        for vehiculo in vehiculos:
+            # Obtenemos las infracciones asociadas a este vehículo y las agregamos a la lista total
+            infracciones_vehiculo = vehiculo.infracciones
+            infracciones_totales.extend(infracciones_vehiculo)
+
+        return infracciones_totales

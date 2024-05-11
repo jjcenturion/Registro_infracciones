@@ -1,4 +1,7 @@
 from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional
+from typing import List
 
 class PersonaBase(BaseModel):
 
@@ -33,3 +36,38 @@ class Vehiculo(VehiculoBase):
 
     class Config:
         orm_mode = True
+
+class OficialBase(BaseModel):
+
+    nombre: str
+    numero_identificatorio: str
+
+class OficialCreate(OficialBase):
+    pass
+
+class Oficial(OficialBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class InfraccionBase(BaseModel):
+
+    placa_patente: str
+    timestamp: datetime
+    comentario: Optional[str] = None
+
+class InfraccionCreate(InfraccionBase):
+    pass
+
+class Infraccion(InfraccionBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+class InformeInfraccionRequest(BaseModel):
+    correo_electronico: str
+
+class InformeInfraccionResponse(BaseModel):
+    infracciones: List[Infraccion]
