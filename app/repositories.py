@@ -46,6 +46,9 @@ class VehiculoRepo(BaseRepo):
     def __init__(self):
         super().__init__(Vehiculo)
 
+    def find_by_patente(self, db: Session, patente):
+        return db.query(Vehiculo).filter(Vehiculo.placa_patente == patente).first()
+
 class OficialRepo(BaseRepo):
     def __init__(self):
         super().__init__(Oficial)

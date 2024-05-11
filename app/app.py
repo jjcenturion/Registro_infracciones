@@ -9,7 +9,7 @@ from typing import List
 
 from app.models.persona import Persona
 from app.models.database import get_db
-from app.repositories import PersonaRepo
+from app.repositories import PersonaRepo, VehiculoRepo
 import app.schemas as schemas
 
 app = FastAPI()
@@ -63,4 +63,52 @@ def delete_persona(persona_id: int, db: Session = Depends(get_db)):
 
     persona_repo.delete(db, persona_id)
     return "Persona borrada"
+
+@app.post("/vehiculo/", response_model=schemas.Vehiculo)
+def create_vehiculo(vehiculo_request: schemas.VehiculoCreate, db: Session = Depends(get_db)):
+    
+    vehiculo_repo = VehiculoRepo()
+    db_vehiculo = vehiculo_repo.find_by_patente(db=db, patente=vehiculo_request.placa_patente)
+    if db_vehiculo:
+        raise HTTPException(status_code=400, detail=" La placa patente ya existe")
+    else:
+        return vehiculo_repo.create(db=db, obj_data=vehiculo_request)
+    
+
+@app.get('/vehiculos', response_model=List[schemas.Vehiculo])
+def get_vehiculos(db: Session = Depends(get_db)):
+
+    vehiculo_repo = VehiculoRepo() 
+    vehiculos = vehiculo_repo.find_all(db=db)
+    if vehiculos:
+        return vehiculos
+    raise HTTPException(status_code=400, detail="Ningun Vehiculo fue encontrado")
+
+
+@app.put('/vehiculo/{vehiculo_id}', response_model=schemas.Vehiculo)
+def update_vehiculo(vehiculo_id: int, vehiculo_request: schemas.Vehiculo, db: Session = Depends(get_db)):
+
+    vehiculo_repo = VehiculoRepo() 
+    db_vehiculo = vehiculo_repo.find_by_id(db, vehiculo_id)
+    if db_vehiculo:
+        update_vehiculo_encoded = jsonable_encoder(vehiculo_request)
+        db_vehiculo.placa_patente = update_vehiculo_encoded['placa_patente']
+        db_vehiculo.marca = update_vehiculo_encoded['marca']
+        db_vehiculo.color = update_vehiculo_encoded['color']
+        db_vehiculo.propietario_id = update_vehiculo_encoded['propietario_id']
+
+        return vehiculo_repo.update(db, db_vehiculo)
+    else:
+        raise HTTPException(status_code=400, detail="El ID del vehiculo no fue encontrado")
+    
+@app.delete('/vehiculo/{vehiculo_id}')
+def delete_vehiculo(vehiculo_id: int, db: Session = Depends(get_db)):
+
+    vehiculo_repo = VehiculoRepo() 
+    db_vehiculo = vehiculo_repo.find_by_id(db, vehiculo_id)
+    if db_vehiculo is None:
+        raise HTTPException(status_code=404, detail="El ID del vehiculo no fue encontrado")
+
+    vehiculo_repo.delete(db, vehiculo_id)
+    return "Vehiculo borrado"
 
