@@ -22,7 +22,8 @@ def main():
 @app.get('/personas', response_model=List[schemas.Persona])
 def get_personas(db: Session = Depends(get_db)):
 
-    personas = PersonaRepo.find_all(db)
+    persona_repo = PersonaRepo() 
+    personas = persona_repo.find_all(db=db)
     if personas:
         return personas
     raise HTTPException(status_code=400, detail="Ninguna persona fue encontrada")
@@ -31,32 +32,35 @@ def get_personas(db: Session = Depends(get_db)):
 @app.post("/persona/", response_model=schemas.Persona)
 def create_persona(persona_request: schemas.PersonaCreate, db: Session = Depends(get_db)):
     
-    db_persona = PersonaRepo.find_by_name(db, nombre= persona_request.nombre)
+    persona_repo = PersonaRepo()
+    db_persona = persona_repo.find_by_name(db=db, nombre= persona_request.nombre)
     if db_persona:
         raise HTTPException(status_code=400, detail=" La persona ya existe")
     else:
-        return PersonaRepo.create(db, persona=persona_request)
+        return persona_repo.create(db=db, obj_data=persona_request)
     
     
 @app.put('/persona/{persona_id}', response_model=schemas.Persona)
 def update_persona(persona_id: int, persona_request: schemas.Persona, db: Session = Depends(get_db)):
 
-    db_persona = PersonaRepo.find_by_id(db, persona_id)
+    persona_repo = PersonaRepo()
+    db_persona = persona_repo.find_by_id(db, persona_id)
     if db_persona:
         update_persona_encoded = jsonable_encoder(persona_request)
         db_persona.nombre = update_persona_encoded['nombre']
 
-        return PersonaRepo.update(db, db_persona)
+        return persona_repo.update(db, db_persona)
     else:
         raise HTTPException(status_code=400, detail="El ID de persona dado no fue encontrado")
     
 @app.delete('/persona/{persona_id}')
 def delete_persona(persona_id: int, db: Session = Depends(get_db)):
 
-    db_persona = PersonaRepo.find_by_id(db, persona_id)
+    persona_repo = PersonaRepo()
+    db_persona = persona_repo.find_by_id(db, persona_id)
     if db_persona is None:
         raise HTTPException(status_code=404, detail="El ID de persona no fue encontrado")
 
-    PersonaRepo.delete(db, persona_id)
+    persona_repo.delete(db, persona_id)
     return "Persona borrada"
 
