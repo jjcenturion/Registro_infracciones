@@ -41,6 +41,7 @@ class OficialBase(BaseModel):
 
     nombre: str
     numero_identificatorio: str
+    hash_contraseña: str
 
 class OficialCreate(OficialBase):
     pass

@@ -1,15 +1,18 @@
-from typing import Union
+import jwt
+import uvicorn
+from fastapi.security import OAuth2PasswordRequestForm
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,status
 from starlette.responses import RedirectResponse
 from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.models.persona import Persona
+from app.models.oficial import Oficial
 from app.models.database import get_db
 from app.repositories import PersonaRepo, VehiculoRepo, OficialRepo, InfraccionRepo
+from app.auth.services import get_oficial, hashear_contraseña, verificar_contraseña
 import app.schemas as schemas
 
 app = FastAPI()
@@ -120,7 +123,18 @@ def create_oficial(oficial_request: schemas.OficialCreate, db: Session = Depends
     if db_oficial:
         raise HTTPException(status_code=400, detail="El numero identificatorio del oficial ya existe")
     else:
-        return oficial_repo.create(db=db, obj_data=oficial_request)
+        # Crear un nuevo modelo Oficial con los datos de la solicitud y la contraseña hasheada
+        nuevo_oficial = Oficial(
+        nombre=oficial_request.nombre,
+        numero_identificatorio=oficial_request.numero_identificatorio,
+        hash_contraseña=hashear_contraseña(oficial_request.hash_contraseña)
+    )
+        
+        db.add(nuevo_oficial)
+        db.commit()
+        db.refresh(nuevo_oficial)
+        return nuevo_oficial
+    
     
 @app.get('/oficiales', response_model=List[schemas.Oficial])
 def get_oficiales(db: Session = Depends(get_db)):
@@ -132,7 +146,10 @@ def get_oficiales(db: Session = Depends(get_db)):
     raise HTTPException(status_code=400, detail="Ningun Oficial fue encontrado")
 
 @app.post("/infraccion/", response_model=schemas.Infraccion)
-def cargar_infraccion(infraccion_request: schemas.InfraccionCreate, db: Session = Depends(get_db)):
+def cargar_infraccion(
+    infraccion_request: schemas.InfraccionCreate,
+    oficial: schemas.Oficial = Depends(get_oficial), 
+    db: Session = Depends(get_db)):
     
     # Verificar si la placa patente existe en la tabla de vehículos
     vehiculo_repo = VehiculoRepo()
@@ -159,3 +176,26 @@ def generar_informe(informe_request: schemas.InformeInfraccionRequest, db: Sessi
         raise HTTPException(status_code=404, detail="No se encontraron infracciones para el correo electrónico proporcionado")
     return {"infracciones": infracciones}
 
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    
+    password = form_data.password
+
+    oficial_repo = OficialRepo()
+    db_oficial_user = oficial_repo.find_by_numero(db=db, numero_identificatorio=form_data.username)
+    password_hash = oficial_repo.get_hash_contraseña_by_numero(db=db, numero_identificatorio=form_data.username) 
+
+    # Verificamos las credenciales y la contraseña hasheada
+    if not db_oficial_user or not verificar_contraseña(password, password_hash):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
+    # Generamos el token de acceso si las credenciales son válidas
+    token = jwt.encode({"sub": form_data.username}, "secret_key", algorithm="HS256")
+    return {"access_token": token, "token_type": "bearer"}
+
+
+
+
+
+if __name__ == '__main__':
+    uvicorn.run('app.app:app', host='0.0.0.0', port=8000)

@@ -55,6 +55,12 @@ class OficialRepo(BaseRepo):
 
     def find_by_numero(self, db: Session, numero_identificatorio):
         return db.query(Oficial).filter(Oficial.numero_identificatorio == numero_identificatorio).first()
+    
+    def get_hash_contraseña_by_numero(self, db: Session, numero_identificatorio: str):
+        oficial = db.query(Oficial).filter(Oficial.numero_identificatorio == numero_identificatorio).first()
+        if oficial:
+            return oficial.hash_contraseña
+        return None
 
 class InfraccionRepo(BaseRepo):
     def __init__(self):

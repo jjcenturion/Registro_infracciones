@@ -7,3 +7,4 @@ class Oficial(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String, index=True)
     numero_identificatorio = Column(String, unique=True, index=True)
+    hash_contraseña = Column(String(60), unique=True, nullable=False)

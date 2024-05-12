@@ -5,3 +5,9 @@ pymysql
 
 alembic
 
+#Security
+typing_extensions
+pyjwt
+passlib
+bcrypt
+python-jose
