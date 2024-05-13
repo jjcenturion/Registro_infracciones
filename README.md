@@ -63,13 +63,13 @@ Si prefieres ejecutar el proyecto en un contenedor de Docker:
 
 1. Construye la imagen del contenedor:
 
-        ```bash
+    ```bash
     docker build -t proyecto-xyz .
     ```  
 
 2. Crea y ejecuta el contenedor con Docker Compose:
 
-            ```bash
+    ```bash
     docker-compose up
     ``` 
 
