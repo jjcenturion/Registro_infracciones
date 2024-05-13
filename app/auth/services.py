@@ -1,15 +1,18 @@
-
+import os
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends
 from fastapi import FastAPI, HTTPException,status
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 
 from app.models.database import get_db
 from app.models.oficial import Oficial
 
-
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -29,7 +32,7 @@ def hashear_contraseña(contraseña: str) -> str:
 async def get_oficial(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
         # Decodificar el token JWT y obtener el sub (subject)
-        payload = jwt.decode(token, "secret_key", algorithms=["HS256"])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         num_identificatorio = payload.get("sub")
         if not num_identificatorio:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token de acceso inválido")

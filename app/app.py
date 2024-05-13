@@ -1,5 +1,6 @@
 import jwt
 import uvicorn
+import os
 from fastapi.security import OAuth2PasswordRequestForm
 
 from fastapi import FastAPI, HTTPException,status
@@ -8,6 +9,7 @@ from fastapi import APIRouter, Depends
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 from typing import List
+from dotenv import load_dotenv
 
 from app.models.oficial import Oficial
 from app.models.database import get_db
@@ -16,6 +18,10 @@ from app.auth.services import get_oficial, hashear_contraseña, verificar_contra
 import app.schemas as schemas
 
 app = FastAPI()
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
 
 
 @app.get("/")
@@ -190,7 +196,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     if not db_oficial_user or not verificar_contraseña(password, password_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales incorrectas")
     # Generamos el token de acceso si las credenciales son válidas
-    token = jwt.encode({"sub": form_data.username}, "secret_key", algorithm="HS256")
+    token = jwt.encode({"sub": form_data.username}, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
 
 
