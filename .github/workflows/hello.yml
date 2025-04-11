@@ -1,0 +1,16 @@
+name: Hello word
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Hello step
+      run: echo "Hello world!"
+
