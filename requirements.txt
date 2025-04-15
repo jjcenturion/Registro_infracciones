@@ -2,6 +2,11 @@ fastapi
 uvicorn
 SQLAlchemy
 pymysql
+pytest
+httpx
+python-dotenv
+python-multipart
+
 
 alembic
 
