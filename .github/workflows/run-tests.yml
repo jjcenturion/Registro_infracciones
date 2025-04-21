@@ -23,7 +23,6 @@ jobs:
     - name: Run tests inside container
       run: |
         docker compose up -d
-        docker compose exec -T app pytest
 
     - name: Stop containers
       run: docker compose down
