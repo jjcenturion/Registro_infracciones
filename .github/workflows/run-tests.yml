@@ -20,9 +20,11 @@ jobs:
     - name: Build Docker image
       run: docker compose build
 
+    - name: Run app container
+      run: docker compose up -d app
+
     - name: Run tests inside container
-      run: |
-        docker compose up -d
+      run: docker compose exec -T app pytest
 
     - name: Stop containers
       run: docker compose down
