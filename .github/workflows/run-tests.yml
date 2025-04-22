@@ -23,8 +23,14 @@ jobs:
     - name: Run app container
       run: docker compose up -d app
 
+    - name: Check container status
+      run: docker ps -a
+
+    - name: Show DB logs
+      run: docker logs $(docker ps -a -q --filter name=db)
+
     - name: Run tests inside container
-      run: docker compose exec -T app pytest
+      run: docker compose run --rm app pytest
 
     - name: Stop containers
       run: docker compose down
