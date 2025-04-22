@@ -27,7 +27,7 @@ jobs:
       run: docker ps -a
 
     - name: Show DB logs
-      run: docker logs $(docker ps -a -q --filter name=db)
+      run: docker logs $(docker ps -a -q --filter name=registro_infracciones-db-1)
 
     - name: Run tests inside container
       run: docker compose run --rm app pytest
